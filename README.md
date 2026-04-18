@@ -1,101 +1,72 @@
-# QA Portfolio — Skeleton
+# amoCRM QA Automation
 
-**Ситников Сергей Алексеевич**
-Telegram: @ssrjkk | Email: ray013lefe@gmail.com
+**Полная тестовая инфраструктура для amoCRM API v4**
 
 ---
 
-Монорепо с заготовками для 7 пайплайнов. Каждый пайплайн - отдельная директория,
-независимый CI workflow, своя инфраструктура.
-
 ## Пайплайны
 
-| Пайплайн       | Стек                            | Статус     | CI                          |
-|----------------|---------------------------------|------------|-----------------------------|
-| api            | pytest + requests + jsonschema  | скелет     | .github/workflows/api.yml   |
-| db             | pytest + psycopg2               | скелет     | .github/workflows/db.yml    |
-| kafka          | pytest + kafka-python           | скелет     | .github/workflows/kafka.yml |
-| load           | locust                          | скелет     | .github/workflows/load.yml  |
-| k8s            | pytest + kubernetes             | скелет     | .github/workflows/k8s_smoke.yml |
-| crossbrowser   | selenium + Grid                 | скелет     | .github/workflows/crossbrowser.yml |
-| logs           | pytest + kibana REST API        | скелет     | .github/workflows/logs.yml  |
+| Пайплайн | Стек | Файлы |
+|----------|------|-------|
+| **API** | pytest + requests + AmoCRMClient | `pipelines/api/` |
+| **UI** | Playwright + POM | `pipelines/ui/` |
+| **DB** | psycopg2 + PostgreSQL | `pipelines/db/` |
+| **Kafka** | kafka-python | `pipelines/kafka/` |
+| **Load** | Locust | `pipelines/load/` |
+| **K8s** | kubernetes | `pipelines/k8s/` |
+| **Cross-browser** | Selenium Grid | `pipelines/crossbrowser/` |
+| **Logs** | Elasticsearch | `pipelines/logs/` |
+
+## Быстрый старт
+
+```bash
+# Установка зависимостей
+pip install -r requirements.txt
+
+# Настройка переменных окружения
+export AMOCRM_LONG_TOKEN="ваш_долгосрочный_токен"
+export AMOCRM_SUBDOMAIN="ваш_аккаунт"
+
+# Запуск тестов
+pytest pipelines/api/ -m api -v -n auto
+```
+
+## Настройка в GitHub Secrets
+
+- `AMOCRM_LONG_TOKEN` — долгосрочный токен amoCRM
+- `AMOCRM_SUBDOMAIN` — домен аккаунта
+- `DATABASE_URL` — PostgreSQL
+- `KAFKA_BROKERS` — Kafka
+- `KIBANA_URL` — Kibana
+- `SELENIUM_GRID` — Selenium Grid URL
+
+## GitHub Actions
+
+Все 8 workflows в `.github/workflows/`:
+- `api.yml` — API тесты
+- `ui.yml` — UI тесты (Playwright)
+- `db.yml` — DB тесты
+- `kafka.yml` — Kafka тесты
+- `load.yml` — Нагрузочные тесты
+- `k8s_smoke.yml` — K8s smoke тесты
+- `crossbrowser.yml` — Cross-browser тесты
+- `logs.yml` — Log analysis
+- `all.yml` — Все тесты
 
 ## Структура
 
 ```
 pipelines/
-  api/            -> CRUD, контракты, авторизация
-  db/             -> консистентность UI/API/DB, целостность данных
-  kafka/          -> события, async flow, DLQ
-  load/           -> locust tasks, threshold проверка
-  k8s/            -> smoke после деплоя, healthcheck
-  crossbrowser/   -> Selenium Grid, chrome/firefox/edge
-  logs/           -> анализ Kibana после прогона
+├── api/           # API тесты + AmoCRMClient
+├── ui/            # Playwright + Page Objects
+├── db/            # PostgreSQL тесты
+├── kafka/         # Kafka тесты
+├── load/          # Locust нагрузка
+├── k8s/          # K8s smoke
+├── crossbrowser/    # Selenium Grid
+└── logs/          # Kibana анализ
 ```
 
-## Запуск конкретного пайплайна
+## Токен
 
-```bash
-# API
-pytest pipelines/api/ -m api -v
-
-# DB (нужен PostgreSQL)
-docker-compose up -d postgres
-pytest pipelines/db/ -m db -v
-
-# Kafka (нужен Kafka)
-docker-compose up -d kafka zookeeper
-pytest pipelines/kafka/ -m kafka -v
-
-# Load
-locust -f pipelines/load/locustfile.py --headless --users 50 --run-time 60s --host http://localhost:8080
-
-# Cross-browser (нужен Selenium Grid)
-docker-compose up -d selenium-hub chrome firefox edge
-pytest pipelines/crossbrowser/ -m crossbrowser -v
-
-# K8s smoke
-pytest pipelines/k8s/ -m k8s -v
-
-# Log analysis
-pytest pipelines/logs/ -m logs -v
-```
-
-## Что нужно сделать для каждого пайплайна
-
-### api
-- [ ] Заполнить `http_client.py` - методы GET/POST/PUT/DELETE
-- [ ] Добавить авторизацию в conftest.py (получить токен)
-- [ ] Заполнить JSON схемы в `schema_validator.py`
-- [ ] Реализовать тесты (убрать NotImplementedError)
-- [ ] Подключить schemathesis для OpenAPI
-
-### db
-- [ ] Реализовать `db_client.py` (psycopg2 + pool)
-- [ ] Добавить фикстуру `db` в conftest.py
-- [ ] Написать реальные SQL запросы в тестах
-
-### kafka
-- [ ] Реализовать `kafka_client.py` (Producer + Consumer)
-- [ ] Добавить фикстуры producer/consumer в conftest.py
-- [ ] Определить реальные топики и схемы событий
-
-### load
-- [ ] Заполнить endpoint'ы в `locustfile.py`
-- [ ] Настроить авторизацию в `on_start`
-- [ ] Реализовать проверку threshold'ов в `@events.quitting`
-
-### k8s
-- [ ] Реализовать `k8s_client.py`
-- [ ] Заполнить список сервисов в `test_smoke.py`
-- [ ] Настроить kubeconfig в CI через secrets
-
-### crossbrowser
-- [ ] Реализовать `get_driver` в `grid_client.py`
-- [ ] Написать Page Objects или переиспользовать существующие
-- [ ] Заполнить тесты в `test_ui.py`
-
-### logs
-- [ ] Реализовать `kibana_client.py` (Elasticsearch query DSL)
-- [ ] Добавить фикстуру `test_run_window` в conftest.py
-- [ ] Настроить index pattern под конкретный проект
+Получить долгосрочный токен: https://www.amocrm.ru/developers/content/oauth/long-term
