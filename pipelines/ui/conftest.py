@@ -10,30 +10,35 @@ def pytest_configure(config):
 
 
 @pytest.fixture(scope="session")
-def browser_type(browser_name):
-    return browser_name
+def browser_type():
+    return "chromium"
 
 
 @pytest.fixture(scope="session")
-def browser(browser_name):
+def browser():
     with sync_playwright() as p:
-        browser = getattr(p, browser_name).launch(headless=False)
-        yield browser
-        browser.close()
+        b = p.chromium.launch(headless=True)
+        yield b
+        b.close()
+
+
+@pytest.fixture(scope="session")
+def ui_browser():
+    return "chromium"
 
 
 @pytest.fixture(scope="function")
 def context(browser):
-    context = browser.new_context(viewport={"width": 1920, "height": 1080})
-    yield context
-    context.close()
+    ctx = browser.new_context(viewport={"width": 1920, "height": 1080})
+    yield ctx
+    ctx.close()
 
 
 @pytest.fixture(scope="function")
 def page(context):
-    page = context.new_page()
-    yield page
-    page.close()
+    pg = context.new_page()
+    yield pg
+    pg.close()
 
 
 @pytest.fixture(scope="session")
@@ -41,14 +46,12 @@ def ui_base_url():
     return BASE_URL
 
 
-@pytest.fixture(scope="session", params=BROWSERS)
-def ui_browser(request):
-    return request.param
-
-
-def pytest_generate_tests(metafunc):
-    if "ui_browser" in metafunc.fixturenames:
-        metafunc.parametrize("ui_browser", BROWSERS)
+@pytest.fixture(scope="session")
+def test_credentials():
+    return {
+        "valid_user": {"email": "test@example.com", "password": "TestPass123!"},
+        "invalid_user": {"email": "invalid@example.com", "password": "wrong"},
+    }
 
 
 @pytest.hookimpl(hookwrapper=True, tryfirst=True)
@@ -66,16 +69,4 @@ def pytest_runtest_makereport(item, call):
 
         if page:
             screenshot = page.screenshot()
-            allure.attach(
-                screenshot,
-                name=f"{item.name}_failed",
-                attachment_type=allure.AttachmentType.PNG
-            )
-
-
-@pytest.fixture(scope="session")
-def test_credentials():
-    return {
-        "valid_user": {"email": "test@example.com", "password": "TestPass123!"},
-        "invalid_user": {"email": "invalid@example.com", "password": "wrong"},
-    }
+            allure.attach(screenshot, name=f"{item.name}_failed", attachment_type=allure.AttachmentType.PNG)

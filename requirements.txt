@@ -17,7 +17,7 @@ python-dotenv==1.0.1
 
 psycopg2-binary==2.9.10
 
-kafka-python==2.0.2
+kafka-python-ng==2.2.2
 
 locust==2.29.1
 
