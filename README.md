@@ -1,58 +1,48 @@
-# amoCRM QA Automation Framework
+# QA Automation Framework для amoCRM
 
-**Enterprise-grade test automation framework** | 135+ tests | 99.2% stability | 8 test types | Production-ready
+Enterprise-grade фреймворк автоматизации тестирования | 135+ тестов | 99.2% стабильность | 8 типов тестов
 
-```mermaid
-flowchart TB
-    subgraph CI["CI/CD Pipeline"]
-        L[Lint & Type Check] --> U[Unit Tests]
-        U --> S[Smoke Tests]
-        S --> A[API Tests]
-        S --> DB[DB Tests]
-        A --> I[Integration Tests]
-        DB --> I
-        I --> E[E2E Tests]
-        E --> R[Report & Notify]
-    end
-    
-    subgraph Layers["Test Layers"]
-        API[API Layer<br/>70%]
-        INT[Integration<br/>20%]
-        E2E[E2E Layer<br/>10%]
-    end
-    
-    API --> INT --> E2E
+```
++--------+     +--------+     +--------+     +--------+
+|  Lint  | --> | Unit   | --> | Smoke  | --> |  API   |
++--------+     +--------+     +--------+     +--------+
+                                             
+                                             
++--------+     +--------+     +--------+     +--------+
+|   E2E  | <-- | Integ- | <-- |  DB    | <-- | Kafka  |
+|        |     | ration |     |        |     |        |
++--------+     +--------+     +--------+     +--------+
 ```
 
-## 🎯 Why This Framework
+## Почему этот фреймворк
 
-| Metric | Value | Impact |
-|--------|-------|--------|
-| **Test Stability** | 99.2% | Zero flaky tests in production CI |
-| **Execution Time** | 3 min smoke / 15 min full | Fast feedback loop |
-| **Coverage** | 135+ tests | Critical paths protected |
-| **Parallelization** | Auto-scaled (4 workers) | 4x faster than sequential |
-| **Flaky Detection** | Auto-quarantine | No false positives |
-| **Observability** | Full traceability | 2-min root cause |
+| Метрика | Значение | Влияние |
+|---------|----------|---------|
+| Стабильность тестов | 99.2% | Нет флейки в продакшен CI |
+| Время прогона | 3 мин smoke / 15 мин full | Быстрый фидбек |
+| Покрытие | 135+ тестов | Защита критических путей |
+| Параллелизация | Auto-scaled (4 workers) | В 4 раза быстрее последовательного |
+| Обнаружение флейки | Auto-quarantine | Нет ложных срабатываний |
+| Наблюдаемость | Полная трассировка | 2 минуты на root cause |
 
-## 🚀 Quick Start (5 min)
+## Быстрый старт (5 минут)
 
 ```bash
-# 1. Clone and start infrastructure
-git clone https://github.com/ssrjkk/amoCRM.git
-cd amoCRM
+# 1. Клонировать и запустить инфраструктуру
+git clone https://github.com/ssrjkk/framework-for-amoCRM.git
+cd framework-for-amoCRM
 
-# 2. Start all services (PostgreSQL, Kafka, Elasticsearch, Selenium Grid)
+# 2. Запустить все сервисы (PostgreSQL, Kafka, Elasticsearch, Selenium Grid)
 docker-compose -f docker-compose.yml up -d
 
-# 3. Run tests (parallel, with Allure report)
+# 3. Запустить тесты (параллельно, с Allure отчётом)
 pytest pipelines/ -v -n auto --alluredir=reports
 
-# 4. View report
+# 4. Посмотреть отчёт
 allure serve reports
 ```
 
-**Environment variables** (`.env`):
+Переменные окружения (`.env`):
 ```bash
 APP_URL=http://localhost:8080
 DATABASE_URL=postgresql://user:pass@localhost:5432/amocrm
@@ -62,200 +52,178 @@ AMOCRM_SUBDOMAIN=test
 
 ---
 
-## 🏗️ Architecture
+## Архитектура
 
 ```
 amoCRM/
-├── core/                      # Framework core
-│   ├── config.py             # 12-factor config (Pydantic v2)
-│   ├── logger.py             # JSON structured logging
-│   └── exceptions.py         # Custom exceptions
+├── core/                      # Ядро фреймворка
+│   ├── config.py             # 12-factor конфиг (Pydantic v2)
+│   ├── logger.py             # JSON структурированное логирование
+│   ├── resilience.py         # Retry, circuit breaker, rate limiter
+│   └── exceptions.py         # Кастомные исключения
 │
-├── pipelines/                # Test pipelines (Page Object Model)
-│   ├── api/                 # API tests
-│   │   ├── tests/           # Test scenarios
-│   │   ├── conftest.py      # Fixtures (session-scoped)
+├── pipelines/                # Тестовые пайплайны (Page Object Model)
+│   ├── api/                 # API тесты
+│   │   ├── tests/           # Тестовые сценарии
+│   │   ├── conftest.py      # Фикстуры (session-scoped)
 │   │   └── utils/
-│   │       ├── base_client.py    # BaseAPIClient with retry/circuit-breaker
-│   │       ├── http_client.py    # AmoCRM client
-│   │       └── schema_validator.py # Contract validation
+│   │       ├── base_client.py    # BaseAPIClient с retry/circuit-breaker
+│   │       ├── http_client.py    # AmoCRM клиент
+│   │       └── schema_validator.py # Валидация контрактов
 │   │
-│   ├── ui/                  # UI tests (Playwright)
+│   ├── ui/                  # UI тесты (Playwright)
 │   │   ├── pages/           # Page Objects
-│   │   │   ├── base.py      # BasePage with waiters/modals/forms
-│   │   │   └── home.py      # Page implementations
-│   │   ├── conftest.py      # Browser fixtures
-│   │   └── tests/           # E2E scenarios
+│   │   │   ├── base.py      # BasePage с waiters/modals/forms
+│   │   │   └── home.py      # Реализации страниц
+│   │   ├── conftest.py      # Браузерные фикстуры
+│   │   └── tests/           # E2E сценарии
 │   │
-│   ├── db/                  # Database tests
-│   │   ├── tests/           # Consistency & integrity
-│   │   └── utils/           # DB client with connection pooling
+│   ├── db/                  # Database тесты
+│   │   ├── tests/           # Консистентность и целостность
+│   │   └── utils/           # DB клиент с connection pooling
 │   │
-│   ├── kafka/               # Event-driven tests
-│   │   ├── tests/           # Producer/consumer tests
-│   │   └── utils/           # Kafka client with DLQ
+│   ├── kafka/               # Event-driven тесты
+│   │   ├── tests/           # Producer/consumer тесты
+│   │   └── utils/           # Kafka клиент с DLQ
 │   │
-│   ├── load/                # Load tests (Locust)
-│   │   ├── locustfile.py    # Load scenarios
-│   │   └── thresholds.py    # Performance thresholds
+│   ├── load/                # Нагрузочные тесты (Locust)
+│   │   ├── locustfile.py    # Сценарии нагрузки
+│   │   └── thresholds.py    # Пороговые значения
 │   │
-│   ├── k8s/                 # K8s smoke tests
+│   ├── k8s/                 # K8s smoke тесты
 │   ├── crossbrowser/        # Selenium Grid (Chrome/Firefox/Edge)
-│   └── logs/                # Kibana log analysis
+│   └── logs/                # Анализ логов Kibana
 │
-├── fixtures/                # Test data factories
-│   └── data_factory.py      # Contact, Company, Lead, Task generators
+├── fixtures/                # Фабрики тестовых данных
+│   └── data_factory.py      # Генераторы Contact, Company, Lead, Task
 │
 ├── .github/workflows/       # CI/CD
-│   └── ci.yml              # Unified pipeline with quality gates
+│   └── ci.yml              # Единый пайплайн с quality gates
 │
-├── docker/                  # Docker files
-│   └── Dockerfile.test     # Test runner image
+├── docker/                  # Docker файлы
+│   └── Dockerfile.test     # Образ для запуска тестов
 │
-├── config/                  # Configuration
-│   └── settings.py         # Settings with env override
+├── config/                  # Конфигурация
+│   └── settings.py         # Настройки с env override
 │
-└── docs/                    # Documentation
+└── docs/                    # Документация
     ├── adr/                # Architecture Decision Records
-    └── runbooks/           # Troubleshooting guides
+    └── runbooks/           # Руководства по устранению неполадок
 ```
 
-### 🔑 Key Abstractions
+### Ключевые абстракции
 
-#### BaseAPIClient — Resilience Layer
+#### BaseAPIClient - слой устойчивости
+
 ```python
 # pipelines/api/utils/base_client.py
 class BaseAPIClient:
-    """API client with retry, circuit breaker, timeouts."""
+    """API клиент с retry, circuit breaker, таймаутами."""
     
     def __init__(self, base_url, token=None, timeout=30):
         self._session = requests.Session()
         self._retry = Retry(
             total=3,
             backoff_factor=1.5,
-            jitter=0.3,  # Prevent thundering herd
+            jitter=0.3,  # Предотвращает thundering herd
             status_forcelist=[429, 500, 502, 503, 504]
         )
         self._circuit = CircuitBreaker(failure_threshold=5)
 ```
 
-#### BasePage — Stable UI Interactions
+#### BasePage - стабильные UI взаимодействия
+
 ```python
 # pipelines/ui/pages/base.py
 class BasePage:
-    """Page Object with explicit waits and stabilization."""
+    """Page Object с явными ожиданиями и стабилизацией."""
     
     def wait_until_visible(self, selector, timeout=30_000):
-        """Explicit wait prevents flakiness."""
+        """Явное ожидание предотвращает флейк."""
         return self.page.wait_for_selector(selector, timeout=timeout, state="visible")
 ```
 
-#### DataFactory — Consistent Test Data
+#### DataFactory - консистентные тестовые данные
+
 ```python
 # fixtures/data_factory.py
 class ContactFactory:
-    """Faker-based data generation with business rules."""
+    """Faker-based генерация данных с бизнес-правилами."""
     
     def create_contact(self, **overrides):
         return {
             "name": self.faker.name(),
-            "phone": self.faker.phone_number(),  # Format validated
-            "email": self.faker.email(),          # Unique guaranteed
+            "phone": self.faker.phone_number(),  # Формат валидирован
+            "email": self.faker.email(),          # Уникальность гарантирована
             **overrides
         }
 ```
 
 ---
 
-## 🧪 Test Strategy
+## Тестовая стратегия
 
-### Test Pyramid
+### Пирамида тестов
 
-```mermaid
-pie title Test Distribution
-    "Unit/API" : 70
-    "Integration" : 20
-    "E2E" : 10
+```
+Unit/API   : 70%
+Integration: 20%
+E2E        : 10%
 ```
 
-| Level | Tests | When Run | Timeout |
-|-------|-------|----------|---------|
-| **Smoke** | 15 | Every commit | 3 min |
-| **Unit** | 50 | Every PR | 5 min |
-| **API** | 33 | Every PR | 10 min |
-| **Integration** | 20 | Daily + PR | 15 min |
-| **E2E** | 12 | Before release | 20 min |
-| **Load** | 10 | Weekly + release | 30 min |
+| Уровень | Тестов | Когда запускается | Таймаут |
+|---------|--------|-------------------|---------|
+| Smoke | 15 | Каждый коммит | 3 мин |
+| Unit | 50 | Каждый PR | 5 мин |
+| API | 33 | Каждый PR | 10 мин |
+| Integration | 20 | Ежедневно + PR | 15 мин |
+| E2E | 12 | Перед релизом | 20 мин |
+| Load | 10 | Еженедельно + релиз | 30 мин |
 
-### Test Markers
+### Маркеры тестов
 
 ```bash
-# Run by type
-pytest -m smoke -v        # Fast feedback
-pytest -m api -v          # API tests
-pytest -m ui -v           # Playwright tests
-pytest -m critical -v     # Critical paths
+# Запуск по типу
+pytest -m smoke -v        # Быстрый фидбек
+pytest -m api -v          # API тесты
+pytest -m ui -v           # Playwright тесты
+pytest -m critical -v     # Критические пути
 
-# Run by scope
-pytest -m "not slow"      # Exclude slow tests
-pytest -m "integration"   # Integration tests only
+# Запуск по области
+pytest -m "not slow"      # Исключить медленные тесты
+pytest -m "integration"   # Только интеграционные тесты
 ```
 
 ---
 
-## ⚙️ CI/CD Pipeline
+## CI/CD пайплайн
 
-```mermaid
-flowchart LR
-    subgraph Trigger
-        P[Push to main]
-        PR[Pull Request]
-        S[Schedule]
-    end
-    
-    subgraph Pipeline["GitHub Actions"]
-        L[Lint: ruff + mypy]
-        U[Unit Tests]
-        S3[Smoke Tests]
-        M[Matrix: API/DB/Kafka]
-        I[Integration]
-        E[E2E]
-        R[Report: Allure]
-        N[Notify: Discord]
-    end
-    
-    subgraph Quality["Quality Gates"]
-        C[Coverage > 80%]
-        F[Flaky < 1%]
-        T[Time < threshold]
-    end
-    
-    P --> L --> U --> S3 --> M --> I --> E --> R --> N
-    PR --> L --> U --> M --> R
-    S --> L --> U --> S3 --> M --> I --> E --> R
-    
-    M --> C
-    R --> F
-    E --> T
+```
+Push to main --> Lint --> Unit --> Smoke --> API/DB/Kafka --> Integration --> E2E --> Report
+                  |                                    |
+                  v                                    v
+Pull Request  --> Lint --> Unit ------------------> API/DB --> Report
+                                                      |
+Schedule      --> Lint --> Unit --> Smoke --> All ----> Report
 ```
 
-### Pipeline Stages
+### Этапы пайплайна
 
-| Stage | Trigger | SLA | Artifact | Gate |
-|-------|---------|-----|----------|------|
-| **Lint** | Every push | 30s | ruff.json | Fail on error |
-| **Unit** | Every push | 5min | coverage.xml | Coverage > 80% |
-| **Smoke** | Every push | 3min | allure-results | 0 failures |
-| **API (matrix)** | Every PR | 10min | allure-results | 0 failures |
-| **Integration** | Daily + PR | 15min | allure-results | 0 failures |
-| **E2E** | Before release | 20min | video + screenshot | 0 failures |
-| **Deploy** | On main | - | Docker image | All gates passed |
+| Этап | Триггер | SLA | Артефакт | Gate |
+|------|---------|-----|----------|------|
+| Lint | Каждый push | 30с | ruff.json | Fail on error |
+| Unit | Каждый push | 5мин | coverage.xml | Coverage > 80% |
+| Smoke | Каждый push | 3мин | allure-results | 0 failures |
+| API (matrix) | Каждый PR | 10мин | allure-results | 0 failures |
+| Integration | Daily + PR | 15мин | allure-results | 0 failures |
+| E2E | Перед релизом | 20мин | video + screenshot | 0 failures |
+| Deploy | On main | - | Docker image | All gates passed |
 
 ---
 
-## 🔍 Observability
+## Наблюдаемость
 
-### Structured Logging
+### Структурированное логирование
 
 ```json
 {
@@ -272,30 +240,15 @@ flowchart LR
 }
 ```
 
-### Traceability Flow
+### Трассировка
 
-```mermaid
-sequenceDiagram
-    participant T as Test
-    participant A as API Client
-    participant S as AmoCRM API
-    participant D as Database
-    participant K as Kafka
+Тест -> API Client -> AmoCRM API -> Kafka -> База данных
 
-    T->>A: test_create_contact()
-    A->>S: POST /contacts (correlation_id: req-123)
-    S-->>A: 201 Created
-    A->>K: Produce event (contact.created)
-    K-->>A: Event acknowledged
-    A-->>T: Response with entity_id
-    
-    Note over T,K: Full traceability via correlation_id
-```
+Каждый запрос имеет correlation_id для полной трассировки.
 
-### Metrics (Prometheus format)
+### Метрики (Prometheus)
 
 ```python
-# Exposed metrics
 test_duration_seconds{test="test_create_contact"} = 1.234
 test_status{test="test_create_contact",status="passed"} = 1
 flaky_tests_total{test="test_slow_query"} = 3
@@ -304,13 +257,13 @@ coverage_percentage{module="api"} = 0.87
 
 ---
 
-## 🛡️ Reliability & Stability
+## Надёжность и стабильность
 
-### Retry Strategy (Exponential Backoff with Jitter)
+### Стратегия retry (exponential backoff с jitter)
 
 ```python
 def retry_with_backoff(func, max_attempts=3, base_delay=1.0):
-    """Exponential backoff with jitter prevents thundering herd."""
+    """Exponential backoff с jitter предотвращает thundering herd."""
     for attempt in range(max_attempts):
         try:
             return func()
@@ -321,11 +274,10 @@ def retry_with_backoff(func, max_attempts=3, base_delay=1.0):
             time.sleep(delay)
 ```
 
-### Flaky Test Quarantine
+### Карантин для флейки тестов
 
 ```python
-# Auto-detect and quarantine flaky tests
-FLAKY_THRESHOLD = 3  # failures in last 5 runs
+FLAKY_THRESHOLD = 3  # провалов в последних 5 запусках
 
 @pytest.fixture(autouse=True)
 def flaky_tracker(request):
@@ -336,18 +288,18 @@ def flaky_tracker(request):
         pytest.skip(f"Test in quarantine: {test_name}")
 ```
 
-### Data Isolation
+### Изоляция данных
 
 ```python
 @pytest.fixture
 def isolated_contact(api_client):
-    """Each test gets unique data - no collisions."""
+    """Каждый тест получает уникальные данные - без коллизий."""
     data = contact_factory.create_contact(
         name=f"Test_{uuid.uuid4().hex[:8]}",
         email=f"test_{uuid.uuid4().hex[:8]}@example.com"
     )
     yield data
-    # Cleanup guaranteed
+    # Гарантированный cleanup
     try:
         api_client.contacts.delete(data['id'])
     except:
@@ -356,28 +308,28 @@ def isolated_contact(api_client):
 
 ---
 
-## 💼 Business Value
+## Бизнес-ценность
 
-### Bug Cases Found by Framework
+### Найденные баги
 
-| # | Issue | Test | Impact |
-|---|-------|------|--------|
-| 1 | Phone validation bypassed on API | `test_contacts_phone_unique` | DB constraint added |
-| 2 | Race condition in lead status | `test_concurrent_lead_update` | Optimistic locking added |
-| 3 | Missing pagination in /users | `test_pagination_overflow` | Backend pagination fixed |
-| 4 | Kafka message loss on retry | `test_event_delivery_retry` | Dead letter queue implemented |
-| 5 | Memory leak in E2E tests | `test_browser_cleanup` | Session management fixed |
+| # | Проблема | Тест | Влияние |
+|---|----------|------|---------|
+| 1 | Валидация телефона обходилась через API | `test_contacts_phone_unique` | Добавлено DB constraint |
+| 2 | Race condition в статусе лида | `test_concurrent_lead_update` | Добавлен optimistic locking |
+| 3 | Отсутствует пагинация в /users | `test_pagination_overflow` | Исправлена пагинация на бэкенде |
+| 4 | Потеря сообщений Kafka при retry | `test_event_delivery_retry` | Реализована Dead Letter Queue |
+| 5 | Memory leak в E2E тестах | `test_browser_cleanup` | Исправлено управление сессиями |
 
-### ROI Metrics
+### ROI метрики
 
-- **Manual testing hours saved**: ~40 hours/week
-- **Bug detection time**: From 2 days to 2 minutes
-- **Regression time**: From 2 days to 15 minutes
-- **False positive rate**: <1%
+- Часы ручного тестирования сэкономлено: ~40 часов/неделя
+- Время обнаружения бага: с 2 дней до 2 минут
+- Время регрессии: с 2 дней до 15 минут
+- Процент ложных срабатываний: <1%
 
 ---
 
-## 📚 Documentation
+## Документация
 
 ### ADR (Architecture Decision Records)
 
@@ -390,142 +342,75 @@ docs/adr/
 └── 005-data-factory-approach.md
 ```
 
-### Runbook: CI Failure
+### Runbook: Сбой тестов в CI
 
-```markdown
-## 🔴 Test Failed in CI — Quick Fix
+#### Шаг 1: Определить тип ошибки
 
-### Step 1: Identify the Failure Type
+| Индикатор | Вероятная причина | Действие |
+|-----------|-------------------|----------|
+| ConnectionError | Сервис недоступен | Проверить status page |
+| 401 Unauthorized | Токен истек | Обновить AMOCRM_TOKEN |
+| Flaky detected | Тест в карантине | Запустить с --flaky-retry=3 |
+| AssertionError | Баг или регрессия | Создать issue |
 
-| Indicator | Likely Cause | Action |
-|-----------|--------------|--------|
-| `ConnectionError` | External service down | Check status page |
-| `401 Unauthorized` | Token expired | Refresh AMOCRM_TOKEN |
-| `Flaky detected` | Test in quarantine | Run with `--flaky-retry=3` |
-| `AssertionError` | Bug or regression | Create issue |
-
-### Step 2: Reproduce Locally
+#### Шаг 2: Воспроизвести локально
 
 ```bash
-# Run failed test only
+# Запустить только упавший тест
 pytest pipelines/api/tests/test_crud.py::TestContactsCRUD::test_create_contact -v
 
-# Run with full output
+# Запустить с полным выводом
 pytest pipelines/ -k "test_name" -vv --capture=no
 
-# Run with debug logging
+# Запустить с отладочным логированием
 pytest pipelines/ -k "test_name" -vv -o log_cli=true -o log_cli_level=DEBUG
 ```
 
-### Step 3: Check Infrastructure
+#### Шаг 3: Проверить инфраструктуру
 
 ```bash
-# Verify services are running
+# Проверить работающие сервисы
 docker-compose -f docker-compose.yml ps
 
-# Check logs
+# Посмотреть логи
 docker-compose logs -f postgres
 docker-compose logs -f kafka
 ```
 
-### Step 4: Update Baseline (if needed)
+#### Шаг 4: Исправить
 
-```bash
-# Update snapshot tests
-pytest --snapshot-update
-
-# Update load thresholds
-# Edit pipelines/load/thresholds.py
-```
-
-### Escalation Path
-
-1. **Self-service** (10 min): Run locally, check logs
-2. **Team chat** (30 min): Post in #qa-automation
-3. **Tech lead** (1 hour): Create issue with labels
-```
-
-### Contribution Guide
-
-```markdown
-## 👥 Contributing
-
-### Adding a New Test
-
-1. **Choose the right layer:**
-   - API test → `pipelines/api/tests/test_<module>.py`
-   - UI test → `pipelines/ui/pages/` + `pipelines/ui/tests/`
-   - DB test → `pipelines/db/tests/test_<module>.py`
-
-2. **Follow naming convention:**
-   ```python
-   def test_<entity>_<action>_<expected_result>():
-       """Test description with Gherkin: Given/When/Then."""
-   ```
-
-3. **Use fixtures:**
-   ```python
-   def test_create_contact(api_client, isolated_contact):
-       resp = api_client.contacts.create(isolated_contact)
-       assert resp.status_code == 201
-   ```
-
-4. **Add proper markers:**
-   ```python
-   @pytest.mark.api
-   @pytest.mark.critical
-   def test_create_contact(...):
-   ```
-
-5. **Run before PR:**
-   ```bash
-   # Lint
-   make lint
-   
-   # Test
-   pytest pipelines/ -v -n auto
-   
-   # Check coverage
-   make coverage
-   ```
-
-### PR Checklist
-
-- [ ] Tests pass locally (`pytest pipelines/ -v`)
-- [ ] No lint errors (`make lint`)
-- [ ] Coverage not decreased
-- [ ] Documentation updated (if adding new module)
-- [ ] No secrets/tokens in code
-```
+- Если флейки: добавить явное ожидание или retry
+- Если регрессия: исправить баг, добавить тест
+- Если инфраструктура: перезапустить сервисы
 
 ---
 
-## 🏆 Framework Comparison
+## Сравнение с типичным тестовым репозиторием
 
-| Feature | This Framework | Typical Test Repo |
-|---------|---------------|-------------------|
-| **Architecture** | Layered with DI | Monolithic |
-| **Stability** | 99.2% (auto-retry + circuit breaker) | ~85% |
-| **Observability** | JSON logs + correlation ID | Print statements |
-| **CI/CD** | Quality gates + matrix | Single stage |
-| **Data Management** | Factory pattern | Hardcoded |
-| **Parallelization** | Auto-balanced (xdist) | Sequential |
-| **Documentation** | ADR + Runbooks | Readme only |
-
----
-
-## 📞 Contacts
-
-- **Telegram**: @ssrjkk  
-- **Email**: ray013lefe@gmail.com  
-- **GitHub**: https://github.com/ssrjkk
+| Фича | Этот фреймворк | Типичный репо |
+|------|----------------|---------------|
+| Архитектура | Слоистая с DI | Монолит |
+| Стабильность | 99.2% (auto-retry + circuit breaker) | ~85% |
+| Наблюдаемость | JSON логи + correlation ID | Print statements |
+| CI/CD | Quality gates + matrix | Один этап |
+| Управление данными | Factory паттерн | Hardcoded |
+| Параллелизация | Auto-balanced (xdist) | Последовательно |
+| Документация | ADR + Runbooks | Только README |
 
 ---
 
-## 📝 License
+## Контакты
 
-MIT License - see [LICENSE](LICENSE) for details.
+- Telegram: @ssrjkk
+- Email: ray013lefe@gmail.com
+- GitHub: https://github.com/ssrjkk
 
 ---
 
-*Last updated: 2026-04-18 | Version: 2.0.0 | [Changelog](CHANGELOG.md)*
+## Лицензия
+
+MIT License - подробности в файле LICENSE.
+
+---
+
+Обновлено: 2026-04-18 | Версия: 2.0.0
