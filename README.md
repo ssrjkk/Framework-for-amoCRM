@@ -1,151 +1,144 @@
 # amoCRM QA Automation Framework
 
-Полностью рабочий фреймворк для тестирования demo-приложения.
+![Python](https://img.shields.io/badge/Python-3.12-blue)
+![Pytest](https://img.shields.io/badge/Testing-Pytest-green)
+![Playwright](https://img.shields.io/badge/UI-Playwright-purple)
+![Docker](https://img.shields.io/badge/Infrastructure-Docker-blue)
+![License](https://img.shields.io/badge/License-MIT-orange)
 
-## Быстрый старт (5 минут)
+Comprehensive QA automation framework for amoCRM with API, UI, DB, Kafka, Load, and K8s testing.
+
+## 🚀 Quick Start
 
 ```bash
-# 1. Клонировать
-git clone https://github.com/ssrjkk/amoCRM
+# Clone and setup
+git clone https://github.com/ssrjkk/amoCRM.git
 cd amoCRM
 
-# 2. Установить зависимости
-make install
+# Start infrastructure
+docker-compose -f docker-compose.yml up -d
 
-# 3. Поднять инфраструктуру
-make infra-up
+# Run tests
+pytest pipelines/ -v --alluredir=reports
 
-# 4. Запустить тесты
-make test-api
-
-# 5. Открыть отчёт
-make allure
+# Open report
+allure serve reports
 ```
 
-## Структура проекта
+## 📊 Test Coverage
+
+| Type | Coverage | Tests |
+|------|----------|-------|
+| **API** | Auth, CRUD, Contracts | 33 tests |
+| **UI** | Critical scenarios (Playwright) | 12 tests |
+| **DB** | Consistency, Integrity | 12 tests |
+| **Kafka** | Events, Async flow, DLQ | 8 tests |
+| **Load** | Locust with thresholds | 10 tasks |
+| **K8s** | Health checks | 12 tests |
+| **Cross-browser** | Chrome, Firefox, Edge | 27 tests |
+| **Logs** | Kibana error analysis | 10 tests |
+
+## 🏗️ Architecture
 
 ```
-amocrm-qa/
-├── demo-app/           # Flask приложение для тестирования
-│   ├── app.py         # REST API с /health, /api/users, /api/orders
-│   └── Dockerfile     # Docker образ
-├── src/               # Тестовые модули
-│   ├── api/           # API тесты (7 тестов)
-│   ├── db/            # Database тесты (7 тестов)
-│   ├── ui/            # UI тесты (Selenium, 4 теста)
-│   ├── kafka/         # Kafka тесты (3 теста)
-│   ├── load/          # Locust нагрузка (2 сценария)
-│   ├── k8s/           # K8s smoke тесты (3 теста)
-│   └── logs/          # Log analysis тесты (3 теста)
-├── core/               # Общие компоненты
-│   ├── config.py      # pydantic-settings
-│   ├── logger.py      # JSON логгер
-│   └── fixtures.py     # pytest фикстуры
-├── utils/              # Утилиты
-│   ├── api_client.py  # HTTP клиент
-│   └── db_client.py   # PostgreSQL клиент
-├── docker-compose.yml # Инфраструктура
-├── pyproject.toml     # Зависимости
-├── Makefile          # Команды
-└── README.md
+amoCRM/
+├── pipelines/                 # Test pipelines (POM)
+│   ├── api/tests/            # API tests
+│   │   ├── test_auth.py      # Authentication
+│   │   ├── test_crud.py      # CRUD operations
+│   │   └── test_contracts.py # Schema validation
+│   ├── ui/                   # UI tests (Playwright)
+│   │   ├── pages/            # Page Objects
+│   │   └── tests/            # Test scenarios
+│   ├── db/                   # Database tests
+│   ├── kafka/                # Event tests
+│   ├── load/                 # Locust tests
+│   ├── k8s/                  # K8s smoke tests
+│   ├── crossbrowser/         # Selenium Grid
+│   └── logs/                 # Kibana analysis
+├── config/                   # Configuration
+├── core/                     # Core utilities
+├── fixtures/                 # Data factories
+├── .github/workflows/        # CI/CD (single pipeline)
+└── docker/                   # Docker files
 ```
 
-## Demo App
-
-Встроенное Flask-приложение с endpoints:
-
-| Endpoint | Methods | Description |
-|----------|---------|-------------|
-| `/health` | GET | Health check |
-| `/api/users` | GET, POST | CRUD пользователей |
-| `/api/users/{id}` | GET, PUT, DELETE | Операции с пользователем |
-| `/api/orders` | GET, POST | CRUD заказов |
-
-## Тесты
-
-### API Tests (`src/api/`)
-- `test_create_user_success` - создание пользователя
-- `test_create_user_validation_pydantic` - валидация через Pydantic
-- `test_user_crud` - полный CRUD цикл
-- `test_get_user_not_found` - 404 обработка
-
-### DB Tests (`src/db/`)
-- `test_user_created_via_api_exists_in_db` - проверка в БД
-- `test_orders_have_valid_user_reference` - foreign key
-- `test_no_duplicate_emails` - уникальность
-
-### UI Tests (`src/ui/`)
-- `test_health_page_loads` - загрузка страниц
-- `test_no_horizontal_scroll` - responsive
-
-### Kafka Tests (`src/kafka/`)
-- `test_produce_message` - отправка в Kafka
-- `test_consumer_receives_message` - получение
-
-### Load Tests (`src/load/`)
-- `UserScenario` - сценарий: register → view
-- `ApiStressTest` - 100 RPS stress test
-
-## Команды
+## 🧪 Running Tests
 
 ```bash
-make install        # Установить зависимости
-make infra-up      # Поднять Docker
-make infra-down     # Остановить Docker
+# All tests
+pytest pipelines/ -v -n auto
 
-make test-api      # API тесты
-make test-db       # DB тесты
-make test-ui       # UI тесты
-make test-kafka    # Kafka тесты
-make test-load     # Нагрузка
-make test-all      # Все тесты
+# By marker
+pytest pipelines/ -m api -v        # API tests
+pytest pipelines/ -m ui -v         # UI tests
+pytest pipelines/ -m smoke -v      # Fast smoke tests
+pytest pipelines/ -m critical -v   # Critical paths
 
-make allure        # Открыть Allure
-make clean         # Очистить
+# Parallel execution
+pytest pipelines/ -n auto          # Auto-detect CPU cores
+
+# With Allure
+pytest pipelines/ -m api --alluredir=reports
+allure serve reports
 ```
 
-## CI/CD
+## 📦 Infrastructure
 
-GitHub Actions автоматически запускают:
-- При push в main
-- При pull request
-- По расписанию (ежедневно)
+All services with one command:
 
-## Требования
-
-- Python 3.10+
-- Docker + Docker Compose
-- PostgreSQL (в docker-compose)
-- Kafka (в docker-compose)
-- Selenium Grid (в docker-compose)
-
-## Переменные окружения
-
-Создайте `.env`:
-```env
-APP_URL=http://localhost:8080
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=amocrm
-DB_USER=user
-DB_PASSWORD=pass
-KAFKA_BROKERS=localhost:9092
+```bash
+docker-compose -f docker-compose.yml up -d
 ```
 
-## Разработка
+Services:
+- **App** (Flask) - http://localhost:8080
+- **PostgreSQL** - localhost:5432
+- **Kafka** - localhost:9092
+- **Elasticsearch** - localhost:9200
+- **Kibana** - localhost:5601
+- **Selenium Grid** - localhost:4444
 
-Добавить новый тест:
-1. Создать файл `src/<module>/test_<name>.py`
-2. Использовать фикстуры `api_client`, `db_client`
-3. Добавить маркер `@pytest.mark.<module>`
+## 🔧 Tech Stack
 
-```python
-@pytest.mark.api
-def test_example(api_client):
-    response = api_client.get("/health")
-    assert response.status_code == 200
-```
+- **Python 3.12** - Main language
+- **Pytest** - Test framework with xdist
+- **Playwright** - UI automation
+- **Selenium Grid** - Cross-browser testing
+- **Requests** - HTTP client
+- **Kafka-python** - Event streaming
+- **Locust** - Load testing
+- **Kubernetes** - K8s smoke tests
+- **Elasticsearch** - Log analysis
+- **Allure** - Test reporting
+- **GitHub Actions** - CI/CD
 
-## Лицензия
+## ✨ Features
 
-MIT
+- **Page Object Model** - Reusable UI components
+- **Data Factories** - Consistent test data generation
+- **Parallel Execution** - `-n auto` for speed
+- **Screenshots on Failure** - Auto-attached to Allure
+- **Markers** - Run test subsets
+- **Proper Scopes** - Session/function fixtures
+- **Retry Logic** - Robust API client
+- **Thresholds** - Load testing with baselines
+
+## 🐛 Example: Bug Found by Tests
+
+> **Issue**: Duplicate phone numbers allowed via API
+> 
+> **Test**: `test_contacts_phone_unique` in `pipelines/db/tests/test_integrity.py`
+> 
+> **Result**: DB constraint added, API validation implemented
+
+## 📄 Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for:
+- Development workflow
+- Code standards
+- PR requirements
+
+## 📝 License
+
+MIT License
