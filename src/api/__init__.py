@@ -1,5 +1,5 @@
-"""API module - тесты для amoCRM API v4."""
+"""API module."""
 
-from .client import AmoCRMClient
+from utils.api_client import HTTPClient
 
-__all__ = ["AmoCRMClient"]
+__all__ = ["HTTPClient"]

@@ -1,33 +1,36 @@
 """API tests conftest."""
 
 import pytest
-from src.api.client import AmoCRMClient
-from core.config import get_settings
+from utils.api_client import HTTPClient
 
 
 @pytest.fixture(scope="session")
-def api_client() -> AmoCRMClient:
-    """API client с токеном."""
-    return AmoCRMClient()
-
-
-@pytest.fixture(scope="session")
-def api_client_no_token() -> AmoCRMClient:
-    """API client без токена."""
-    return AmoCRMClient(token=None)
+def api_client() -> HTTPClient:
+    """HTTP client fixture."""
+    return HTTPClient()
 
 
 @pytest.fixture(scope="function")
-def test_contact(api_client):
-    """Создать тестовый контакт и удалить после."""
-    resp = api_client.create_contact({"name": "Test Contact"})
+def test_user_data():
+    """Generate random test user data."""
+    import uuid
 
-    if resp.status_code != 200:
-        yield None
-    else:
-        contact_id = resp.json()["_embedded"]["contacts"][0]["id"]
-        yield contact_id
+    unique = uuid.uuid4().hex[:8]
+    return {"name": f"Test User {unique}", "email": f"test{unique}@example.com"}
+
+
+@pytest.fixture(scope="function")
+def created_user(api_client, test_user_data):
+    """Create user and cleanup after test."""
+    response = api_client.post("/api/users", json=test_user_data)
+
+    if response.status_code == 201:
+        user_id = response.json()["user"]["id"]
+        yield user_id
+
         try:
-            api_client.delete_contact(contact_id)
+            api_client.delete(f"/api/users/{user_id}")
         except Exception:
             pass
+    else:
+        yield None

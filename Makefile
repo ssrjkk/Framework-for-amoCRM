@@ -1,56 +1,64 @@
-.PHONY: help test-api test-ui test-db test-kafka test-load test-all test smoke install infra-clean infra-up infra-down
+.PHONY: help install infra-up infra-down test-api test-db test-ui test-kafka test-load test-all allure clean
 
 help:
-	@echo " Доступные команды:"
-	@echo "  make install          - Установить зависимости"
-	@echo "  make test-api         - Запустить API тесты"
-	@echo "  make test-ui         - Запустить UI тесты"
-	@echo "  make test-db          - Запустить DB тесты"
-	@echo "  make test-kafka       - Запустить Kafka тесты"
-	@echo "  make test-load       - Запустить нагрузочные тесты"
-	@echo "  make test-all        - Запустить все тесты"
-	@echo "  make smoke           - Запустить smoke тесты"
-	@echo "  make infra-up        - Поднять инфраструктуру"
-	@echo "  make infra-down      - Остановить инфраструктуру"
+	@echo "=== amoCRM QA Framework ==="
+	@echo ""
+	@echo "make install       - Установить зависимости"
+	@echo "make infra-up      - Поднять инфраструктуру (все сервисы)"
+	@echo "make infra-down    - Остановить инфраструктуру"
+	@echo "make test-api      - Запустить API тесты"
+	@echo "make test-db       - Запустить DB тесты"
+	@echo "make test-ui       - Запустить UI тесты"
+	@echo "make test-kafka    - Запустить Kafka тесты"
+	@echo "make test-load     - Запустить нагрузочные тесты"
+	@echo "make test-all      - Запустить все тесты"
+	@echo "make allure        - Открыть Allure отчёт"
+	@echo "make clean         - Очистить артефакты"
 
-# Install
 install:
 	pip install -e ".[all]"
 
-# API tests
-test-api:
-	pytest src/api/ -m api -v -n auto --alluredir=reports/allure-api
-
-# UI tests
-test-ui:
-	pytest src/ui/ -m ui -v -n auto --alluredir=reports/allure-ui
-
-# DB tests
-test-db:
-	pytest src/db/ -m db -v -n auto --alluredir=reports/allure-db
-
-# Kafka tests
-test-kafka:
-	pytest src/kafka/ -m kafka -v -n auto --alluredir=reports/allure-kafka
-
-# Load tests
-test-load:
-	locust -f src/load/locustfile.py --headless --users 50 --run-time 60s
-
-# All tests
-test-all:
-	pytest src/ -v -n auto --alluredir=reports/allure
-
-# Smoke tests
-smoke:
-	pytest src/ -m smoke -v
-
-# Infrastructure
 infra-up:
-	docker-compose -f infra/docker-compose.yml --profile all up -d
+	docker-compose up -d --build
+	@echo "Waiting for services..."
+	@sleep 15
+	@echo "Services ready!"
 
 infra-down:
-	docker-compose -f infra/docker-compose.yml --profile all down
+	docker-compose down -v
 
-infra-clean:
-	docker-compose -f infra/docker-compose.yml --profile all down -v
+test-api:
+	pytest src/api/ -v --alluredir=reports/allure-results -m api
+
+test-db:
+	pytest src/db/ -v --alluredir=reports/allure-results -m db
+
+test-ui:
+	pytest src/ui/ -v --alluredir=reports/allure-results -m ui
+
+test-kafka:
+	pytest src/kafka/ -v --alluredir=reports/allure-results -m kafka
+
+test-load:
+	locust -f src/load/locustfile.py --headless --users 50 --spawn-rate 10 --run-time 60s --host http://localhost:8080
+
+test-k8s:
+	pytest src/k8s/ -v --alluredir=reports/allure-results -m k8s
+
+test-logs:
+	pytest src/logs/ -v --alluredir=reports/allure-results -m logs
+
+test-all:
+	pytest src/ -v --alluredir=reports/allure-results
+
+test-smoke:
+	pytest src/ -v -m smoke
+
+allure:
+	allure serve reports/allure-results
+
+clean:
+	rm -rf reports/
+	rm -rf logs/
+	find . -type d -name __pycache__ -exec rm -rf {} +
+	find . -type f -name "*.pyc" -delete
