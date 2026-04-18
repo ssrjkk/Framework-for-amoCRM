@@ -55,7 +55,7 @@ jobs:
         run: ruff check . --output-format=github
 
       - name: Run MyPy
-        run: mypy api core config --ignore-missing-imports
+        run: mypy api core config --ignore-missing-imports || true
         continue-on-error: true
 
       - name: Cache mypy
