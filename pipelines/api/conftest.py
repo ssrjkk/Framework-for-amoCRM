@@ -9,7 +9,7 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 import pytest
-from src.api.client import AmoCRMClient
+from pipelines.api.utils.http_client import AmoCRMClient
 from core.config import get_settings
 
 
@@ -22,7 +22,7 @@ def pytest_configure(config):
 @pytest.fixture(scope="session")
 def api_client() -> AmoCRMClient:
     token = get_settings().amocrm_long_token
-    return AmoCRMClient() if token else AmoCRMClient(token="")
+    return AmoCRMClient() if token else AmoCRMClient(long_token="")
 
 
 @pytest.fixture(scope="session")

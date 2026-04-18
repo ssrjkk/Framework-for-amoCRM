@@ -29,9 +29,18 @@ class Settings(BaseSettings):
     db_user: str = Field(default="user", alias="DB_USER")
     db_password: str = Field(default="pass", alias="DB_PASSWORD")
 
+    # AmoCRM
+    amocrm_subdomain: str = Field(default="localhost", alias="AMOCRM_SUBDOMAIN")
+    amocrm_token: str = Field(default="", alias="AMOCRM_LONG_TOKEN")
+    amocrm_long_token: str = Field(default="", alias="AMOCRM_LONG_TOKEN")
+
     @property
     def db_url(self) -> str:
         return f"postgresql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
+
+    @property
+    def amocrm_api_url(self) -> str:
+        return f"https://{self.amocrm_subdomain}.amocrm.ru/api/v4"
 
     # Kafka
     kafka_bootstrap_servers: List[str] = Field(default=["localhost:9092"], alias="KAFKA_BROKERS")
@@ -59,3 +68,13 @@ def get_app_url() -> str:
 def get_db_url() -> str:
     """Get database URL."""
     return get_settings().db_url
+
+
+def get_amocrm_api_url() -> str:
+    """Get AmoCRM API URL."""
+    return get_settings().amocrm_api_url
+
+
+def get_amocrm_token() -> str:
+    """Get AmoCRM token."""
+    return get_settings().amocrm_token

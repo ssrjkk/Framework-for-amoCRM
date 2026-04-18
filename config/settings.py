@@ -1,5 +1,7 @@
 import os
 
+BASE_URL = os.getenv("APP_URL", "http://localhost:8080")
+
 AMOCRM_SUBDOMAIN = os.getenv("AMOCRM_SUBDOMAIN", "test")
 AMOCRM_API_BASE = f"https://{AMOCRM_SUBDOMAIN}.amocrm.ru/api/v4"
 AMOCRM_OAUTH_URL = f"https://{AMOCRM_SUBDOMAIN}.amocrm.ru/oauth2"

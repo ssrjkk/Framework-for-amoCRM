@@ -4,6 +4,7 @@ from psycopg2.extras import RealDictCursor
 from contextlib import contextmanager
 from config.settings import DB_DSN
 import logging
+import pytest
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -16,11 +17,7 @@ class DBClient:
         self._init_pool()
 
     def _init_pool(self):
-        self.pool = psycopg2.pool.ThreadedConnectionPool(
-            minconn=1,
-            maxconn=10,
-            dsn=self.dsn
-        )
+        self.pool = psycopg2.pool.ThreadedConnectionPool(minconn=1, maxconn=10, dsn=self.dsn)
 
     @contextmanager
     def connection(self):
@@ -37,9 +34,7 @@ class DBClient:
     @contextmanager
     def cursor(self, dict_cursor: bool = False):
         with self.connection() as conn:
-            cursor = conn.cursor(
-                cursor_factory=RealDictCursor if dict_cursor else None
-            )
+            cursor = conn.cursor(cursor_factory=RealDictCursor if dict_cursor else None)
             try:
                 yield cursor
             finally:

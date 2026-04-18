@@ -1,5 +1,6 @@
 import json
 import logging
+import pytest
 from kafka import KafkaProducer as KafkaProducerClient
 from kafka import KafkaConsumer as KafkaConsumerClient
 from kafka.errors import NoBrokersAvailable
@@ -95,9 +96,7 @@ class KafkaConsumerClient:
             messages.append(msg.value)
         return messages
 
-    def wait_for(
-        self, predicate: Callable[[dict], bool], timeout_sec: int = 30
-    ) -> Optional[dict]:
+    def wait_for(self, predicate: Callable[[dict], bool], timeout_sec: int = 30) -> Optional[dict]:
         start_time = time.time()
         for msg in self._get_consumer():
             if predicate(msg.value):

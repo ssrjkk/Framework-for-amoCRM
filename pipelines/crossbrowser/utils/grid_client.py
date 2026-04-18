@@ -4,6 +4,7 @@ from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.edge.options import Options as EdgeOptions
 from config.settings import SELENIUM_GRID, BROWSERS
 import logging
+import pytest
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -13,23 +14,13 @@ CAPABILITIES = {
     "chrome": {
         "browserName": "chrome",
         "browserVersion": "latest",
-        "goog:chromeOptions": {
-            "args": ["--no-sandbox", "--disable-dev-shm-usage"]
-        }
+        "goog:chromeOptions": {"args": ["--no-sandbox", "--disable-dev-shm-usage"]},
     },
-    "firefox": {
-        "browserName": "firefox",
-        "browserVersion": "latest",
-        "moz:firefoxOptions": {
-            "args": ["-headless"]
-        }
-    },
+    "firefox": {"browserName": "firefox", "browserVersion": "latest", "moz:firefoxOptions": {"args": ["-headless"]}},
     "edge": {
         "browserName": "MicrosoftEdge",
         "browserVersion": "latest",
-        "ms:edgeOptions": {
-            "args": ["--no-sandbox", "--disable-dev-shm-usage"]
-        }
+        "ms:edgeOptions": {"args": ["--no-sandbox", "--disable-dev-shm-usage"]},
     },
 }
 
@@ -56,15 +47,12 @@ def get_driver(browser: str, use_grid: bool = True):
     caps = CAPABILITIES.get(browser)
     if not caps:
         raise ValueError(f"Unknown browser: {browser}")
-    
+
     options = get_options(browser)
-    
+
     if use_grid:
         logger.info(f"Connecting to Selenium Grid: {SELENIUM_GRID}")
-        driver = webdriver.Remote(
-            command_executor=SELENIUM_GRID,
-            options=options
-        )
+        driver = webdriver.Remote(command_executor=SELENIUM_GRID, options=options)
     else:
         if browser == "chrome":
             driver = webdriver.Chrome(options=options)
@@ -74,7 +62,7 @@ def get_driver(browser: str, use_grid: bool = True):
             driver = webdriver.Edge(options=options)
         else:
             driver = webdriver.Chrome(options=options)
-    
+
     driver.implicitly_wait(10)
     driver.set_page_load_timeout(30)
     return driver

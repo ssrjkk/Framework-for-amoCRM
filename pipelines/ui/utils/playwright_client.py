@@ -31,7 +31,7 @@ class PlaywrightClient:
     def screenshot(self, name: str = "screenshot"):
         if self.page:
             self.page.screenshot(path=f"reports/{name}.png")
-            allure.attach.file(f"reports/{name}.png", name=name, attachment_type=allure AttachmentType.PNG)
+            allure.attach.file(f"reports/{name}.png", name=name, attachment_type=allure.AttachmentType.PNG)
 
 
 @pytest.fixture(scope="session")
