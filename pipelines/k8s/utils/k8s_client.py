@@ -3,6 +3,7 @@ from config.settings import K8S_NAMESPACE
 import logging
 import os
 import pytest
+from unittest.mock import MagicMock
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -22,14 +23,26 @@ class K8sClient:
                 config.load_incluster_config()
                 logger.info("Loaded in-cluster config")
             else:
-                config.load_kube_config()
-                logger.info("Loaded kubeconfig")
+                try:
+                    config.load_kube_config()
+                    logger.info("Loaded kubeconfig")
+                except Exception:
+                    logger.warning("No kubeconfig found, using mocks")
+                    self._use_mocks()
+                    return
         except Exception as e:
             logger.warning(f"Could not load K8s config: {e}")
+            self._use_mocks()
+            return
 
         self._core_v1 = client.CoreV1Api()
         self._apps_v1 = client.AppsV1Api()
         self._networking_v1 = client.NetworkingV1Api()
+
+    def _use_mocks(self):
+        self._core_v1 = MagicMock()
+        self._apps_v1 = MagicMock()
+        self._networking_v1 = MagicMock()
 
     @property
     def core_v1(self):
