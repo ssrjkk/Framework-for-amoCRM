@@ -1,6 +1,6 @@
 import pytest
 from playwright.sync_api import sync_playwright
-from config.settings import BASE_URL, BROWSERS
+from config.settings import BASE_URL
 import allure
 
 
