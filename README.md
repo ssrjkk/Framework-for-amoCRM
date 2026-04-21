@@ -1,5 +1,10 @@
 # Framework для amoCRM
 
+![CI](https://github.com/ssrjkk/framework-for-amoCRM/actions/workflows/ci.yml/badge.svg)
+![Coverage](https://codecov.io/gh/ssrjkk/framework-for-amoCRM/branch/main/graph/badge.svg)
+![Languages](https://img.shields.io/github/languages/top/ssrjkk/framework-for-amoCRM)
+![License](https://img.shields.io/github/license/ssrjkk/framework-for-amoCRM)
+
 Enterprise-grade фреймворк автоматизации тестирования | 135+ тестов | 99.2% стабильность | 8 типов тестов
 
 ```
@@ -56,59 +61,59 @@ AMOCRM_SUBDOMAIN=test
 
 ```
 amoCRM/
-├── core/                      # Ядро фреймворка
-│   ├── config.py             # 12-factor конфиг (Pydantic v2)
-│   ├── logger.py             # JSON структурированное логирование
-│   ├── resilience.py         # Retry, circuit breaker, rate limiter
-│   └── exceptions.py         # Кастомные исключения
+├── core/                              # Ядро фреймворка
+│   ├── config.py                      # 12-factor конфиг (Pydantic v2)
+│   ├── logger.py                      # JSON структурированное логирование
+│   ├── resilience.py                  # Retry, circuit breaker, rate limiter
+│   └── exceptions.py                  # Кастомные исключения
 │
-├── pipelines/                # Тестовые пайплайны (Page Object Model)
-│   ├── api/                 # API тесты
-│   │   ├── tests/           # Тестовые сценарии
-│   │   ├── conftest.py      # Фикстуры (session-scoped)
+├── pipelines/                         # Тестовые пайплайны (Page Object Model)
+│   ├── api/                           # API тесты
+│   │   ├── tests/                     # Тестовые сценарии
+│   │   ├── conftest.py                # Фикстуры (session-scoped)
 │   │   └── utils/
-│   │       ├── base_client.py    # BaseAPIClient с retry/circuit-breaker
-│   │       ├── http_client.py    # AmoCRM клиент
-│   │       └── schema_validator.py # Валидация контрактов
+│   │       ├── base_client.py         # BaseAPIClient с retry/circuit-breaker
+│   │       ├── http_client.py         # AmoCRM клиент
+│   │       └── schema_validator.py    # Валидация контрактов
 │   │
-│   ├── ui/                  # UI тесты (Playwright)
-│   │   ├── pages/           # Page Objects
-│   │   │   ├── base.py      # BasePage с waiters/modals/forms
-│   │   │   └── home.py      # Реализации страниц
-│   │   ├── conftest.py      # Браузерные фикстуры
-│   │   └── tests/           # E2E сценарии
+│   ├── ui/                            # UI тесты (Playwright)
+│   │   ├── pages/                     # Page Objects
+│   │   │   ├── base.py                # BasePage с waiters/modals/forms
+│   │   │   └── home.py                # Реализации страниц
+│   │   ├── conftest.py                # Браузерные фикстуры
+│   │   └── tests/                     # E2E сценарии
 │   │
-│   ├── db/                  # Database тесты
-│   │   ├── tests/           # Консистентность и целостность
-│   │   └── utils/           # DB клиент с connection pooling
+│   ├── db/                            # Database тесты
+│   │   ├── tests/                     # Консистентность и целостность
+│   │   └── utils/                     # DB клиент с connection pooling
 │   │
-│   ├── kafka/               # Event-driven тесты
-│   │   ├── tests/           # Producer/consumer тесты
-│   │   └── utils/           # Kafka клиент с DLQ
+│   ├── kafka/                         # Event-driven тесты
+│   │   ├── tests/                     # Producer/consumer тесты
+│   │   └── utils/                     # Kafka клиент с DLQ
 │   │
-│   ├── load/                # Нагрузочные тесты (Locust)
-│   │   ├── locustfile.py    # Сценарии нагрузки
-│   │   └── thresholds.py    # Пороговые значения
+│   ├── load/                          # Нагрузочные тесты (Locust)
+│   │   ├── locustfile.py              # Сценарии нагрузки
+│   │   └── thresholds.py              # Пороговые значения
 │   │
-│   ├── k8s/                 # K8s smoke тесты
-│   ├── crossbrowser/        # Selenium Grid (Chrome/Firefox/Edge)
-│   └── logs/                # Анализ логов Kibana
+│   ├── k8s/                           # K8s smoke тесты
+│   ├── crossbrowser/                  # Selenium Grid (Chrome/Firefox/Edge)
+│   └── logs/                          # Анализ логов Kibana
 │
-├── fixtures/                # Фабрики тестовых данных
-│   └── data_factory.py      # Генераторы Contact, Company, Lead, Task
+├── fixtures/                          # Фабрики тестовых данных
+│   └── data_factory.py                # Генераторы Contact, Company, Lead, Task
 │
-├── .github/workflows/       # CI/CD
-│   └── ci.yml              # Единый пайплайн с quality gates
+├── .github/workflows/                 # CI/CD
+│   └── ci.yml                         # Единый пайплайн с quality gates
 │
-├── docker/                  # Docker файлы
-│   └── Dockerfile.test     # Образ для запуска тестов
+├── docker/                            # Docker файлы
+│   └── Dockerfile.test                # Образ для запуска тестов
 │
-├── config/                  # Конфигурация
-│   └── settings.py         # Настройки с env override
+├── config/                            # Конфигурация
+│   └── settings.py                    # Настройки с env override
 │
-└── docs/                    # Документация
-    ├── adr/                # Architecture Decision Records
-    └── runbooks/           # Руководства по устранению неполадок
+└── docs/                              # Документация
+    ├── adr/                           # Architecture Decision Records
+    └── runbooks/                      # Руководства по устранению неполадок
 ```
 
 ### Ключевые абстракции
@@ -404,13 +409,3 @@ docker-compose logs -f kafka
 - Telegram: @ssrjkk
 - Email: ray013lefe@gmail.com
 - GitHub: https://github.com/ssrjkk
-
----
-
-## Лицензия
-
-MIT License - подробности в файле LICENSE.
-
----
-
-Обновлено: 2026-04-18 | Версия: 2.0.0
