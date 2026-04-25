@@ -453,6 +453,8 @@ jobs:
     timeout-minutes: 5
     needs: [lint, unit-tests, smoke-tests, api-tests, db-tests, ui-tests, kafka-tests]
     if: always()
+    # Only notify on main/develop - skip PRs from forks
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
     steps:
       - name: Get run summary
         id: summary
@@ -486,7 +488,12 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Send Telegram notification
+        if: success() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
         run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "Telegram not configured, skipping"
+            exit 0
+          fi
           TELEGRAM_BOT_TOKEN="${{ secrets.TELEGRAM_BOT_TOKEN }}"
           TELEGRAM_CHAT_ID="${{ secrets.TELEGRAM_CHAT_ID }}"
           REPO="${{ github.repository }}"
@@ -506,13 +513,16 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
 
       - name: Send Discord notification
+        if: success() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
         run: |
-          if [ -n "$DISCORD_WEBHOOK" ]; then
-            STATUS_ICON="${{ steps.summary.outputs.status_icon }}"
-            STATUS_TEXT="${{ steps.summary.outputs.status_text }}"
-            curl -s --max-time 10 -X POST $DISCORD_WEBHOOK \
-              -H "Content-Type: application/json" \
-              -d "{\"content\": \"$STATUS_ICON CI $STATUS_TEXT on main branch! https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
+          if [ -z "$DISCORD_WEBHOOK" ]; then
+            echo "Discord not configured"
+            exit 0
           fi
+          STATUS_ICON="${{ steps.summary.outputs.status_icon }}"
+          STATUS_TEXT="${{ steps.summary.outputs.status_text }}"
+          curl -s --max-time 10 -X POST $DISCORD_WEBHOOK \
+            -H "Content-Type: application/json" \
+            -d "{\"content\": \"$STATUS_ICON CI $STATUS_TEXT on main branch! https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
