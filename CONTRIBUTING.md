@@ -1,6 +1,6 @@
 # Contributing to amoCRM QA Framework
 
-Thanks for your interest in contributing!
+Спасибо за ваш интерес!
 
 ## 🚀 Quick Start
 
