@@ -248,15 +248,15 @@ def get_orders():
 if __name__ == "__main__":
     import time
 
-    # Wait for PostgreSQL
-    max_retries = 10
+    # Try to initialize database (don't fail if no DB)
+    max_retries = 5
     for i in range(max_retries):
         try:
             init_db()
             print("Database initialized!")
             break
-        except Exception:
-            print(f"Waiting for database... ({i + 1}/{max_retries})")
-            time.sleep(2)
+        except Exception as e:
+            print(f"DB not available ({i+1}/{max_retries}): {e}")
+            time.sleep(1)
 
-    app.run(host="0.0.0.0", port=8080, debug=True)
+    app.run(host="0.0.0.0", port=8080, debug=False)

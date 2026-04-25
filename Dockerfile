@@ -1,4 +1,4 @@
-FROM python:3.12-slim as builder
+FROM python:3.12-slim AS builder
 
 WORKDIR /build
 
@@ -29,7 +29,7 @@ ENV DB_HOST=postgres
 ENV DB_PORT=5432
 ENV DB_NAME=amocrm
 ENV DB_USER=user
-ENV DB_PASSWORD=pass
+ENV DB_PASSWORD=dummy
 ENV FLASK_APP=app.py
 
 EXPOSE 8080
