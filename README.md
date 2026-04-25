@@ -62,28 +62,28 @@ AMOCRM_SUBDOMAIN=test
 
 ```
 amoCRM/
-├── tests/                              # Unit тесты
-│   ├── test_smoke.py                   # Smoke тесты
+├── tests/                               # Unit тесты
+│   ├── test_smoke.py                    # Smoke тесты
 │   ├── test_contacts.py                 # Contacts CRUD
-│   ├── test_companies.py              # Companies CRUD
-│   ├── test_deals.py                 # Deals CRUD
-│   ├── test_users.py                 # Users API
-│   └── test_integration.py           # Интеграционные
+│   ├── test_companies.py                # Companies CRUD
+│   ├── test_deals.py                    # Deals CRUD
+│   ├── test_users.py                    # Users API
+│   └── test_integration.py              # Интеграционные
 │
-├── pipelines/                         # E2E пайплайны
-│   ├── api/                          # API тесты
-│   ├── ui/                           # UI тесты (Playwright)
-│   ├── db/                           # Database тесты
-│   ├── kafka/                        # Kafka event тесты
-│   ├── load/                         # Нагрузочные тесты
-│   ├── k8s/                          # K8s smoke тесты
-│   ├── crossbrowser/                # Cross-browser тесты
-│   └── logs/                         # Log analysis
+├── pipelines/                           # E2E пайплайны
+│   ├── api/                             # API тесты
+│   ├── ui/                              # UI тесты (Playwright)
+│   ├── db/                              # Database тесты
+│   ├── kafka/                           # Kafka event тесты
+│   ├── load/                            # Нагрузочные тесты
+│   ├── k8s/                             # K8s smoke тесты
+│   ├── crossbrowser/                    # Cross-browser тесты
+│   └── logs/                            # Log analysis
 │
-├── fixtures/                          # Фабрики тестовых данных
-├── .github/workflows/                # CI/CD
-├── config/                           # Конфигурация
-└── docs/                             # Документация
+├── fixtures/                            # Фабрики тестовых данных
+├── .github/workflows/                   # CI/CD
+├── config/                              # Конфигурация
+└── docs/                                # Документация
 ```
 
 ### Ключевые абстракции
@@ -128,7 +128,7 @@ class ContactFactory:
     def create_contact(self, **overrides):
         return {
             "name": self.faker.name(),
-            "phone": self.faker.phone_number(),  # Формат валидирован
+            "phone": self.faker.phone_number(),   # Формат валидирован
             "email": self.faker.email(),          # Уникальность гарантирована
             **overrides
         }
