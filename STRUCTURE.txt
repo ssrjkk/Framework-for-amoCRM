@@ -1,64 +1,22 @@
-qa-portfolio/
-├── config/
-│   └── settings.py
-├── pipelines/
-│   ├── api/
-│   │   ├── conftest.py
-│   │   ├── tests/
-│   │   │   ├── test_contracts.py
-│   │   │   ├── test_crud.py
-│   │   │   └── test_auth.py
-│   │   └── utils/
-│   │       ├── schema_validator.py
-│   │       └── http_client.py
-│   ├── db/
-│   │   ├── conftest.py
-│   │   ├── tests/
-│   │   │   ├── test_consistency.py
-│   │   │   └── test_integrity.py
-│   │   └── utils/
-│   │       └── db_client.py
-│   ├── kafka/
-│   │   ├── conftest.py
-│   │   ├── tests/
-│   │   │   ├── test_events.py
-│   │   │   └── test_async_flow.py
-│   │   └── utils/
-│   │       └── kafka_client.py
-│   ├── load/
-│   │   ├── locustfile.py
-│   │   ├── tasks/
-│   │   │   ├── api_tasks.py
-│   │   │   └── user_tasks.py
-│   │   └── thresholds.py
-│   ├── k8s/
-│   │   ├── conftest.py
-│   │   ├── tests/
-│   │   │   ├── test_smoke.py
-│   │   │   └── test_health.py
-│   │   └── utils/
-│   │       └── k8s_client.py
-│   ├── crossbrowser/
-│   │   ├── conftest.py
-│   │   ├── tests/
-│   │   │   └── test_ui.py
-│   │   └── utils/
-│   │       └── grid_client.py
-│   └── logs/
-│       ├── conftest.py
-│       ├── tests/
-│       │   └── test_log_errors.py
-│       └── utils/
-│           └── kibana_client.py
-├── .github/
-│   └── workflows/
-│       ├── api.yml
-│       ├── db.yml
-│       ├── kafka.yml
-│       ├── load.yml
-│       ├── k8s_smoke.yml
-│       ├── crossbrowser.yml
-│       └── logs.yml
-├── docker-compose.yml
-├── requirements.txt
-└── README.md
+amoCRM/
+├── tests/                 # Unit тесты
+│   ├── test_smoke.py     # Smoke тесты
+│   ├── test_contacts.py  # Contacts CRUD
+│   ├── test_companies.py # Companies CRUD
+│   ├── test_deals.py    # Deals CRUD
+│   ├── test_users.py    # Users API
+│   └── test_integration.py
+├── pipelines/           # E2E пайплайны
+│   ├── api/           # API тесты
+│   ├── ui/            # UI тесты (Playwright)
+│   ├── db/            # Database тесты
+│   ├── kafka/         # Kafka тесты
+│   ├── load/          # Нагрузочные тесты
+│   ├── k8s/          # K8s тесты
+│   ├── crossbrowser/  # Cross-browser
+│   └── logs/         # Log analysis
+├── core/              # Core utilities
+├── fixtures/          # Test fixtures
+├── config/           # Configuration
+├── .github/workflows/# CI/CD
+└── docker/           # Docker files

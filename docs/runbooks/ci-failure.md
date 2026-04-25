@@ -2,96 +2,59 @@
 
 ## Quick Reference
 
-| Error Pattern | Likely Cause | Resolution Time |
-|---------------|--------------|-----------------|
+| Error Pattern | Likely Cause | Resolution |
+|---------------|--------------|------------|
 | `ConnectionError` | Service down | 2 min |
 | `401 Unauthorized` | Token expired | 1 min |
 | `TimeoutError` | Service slow | 5 min |
-| `Flaky test` | Test in quarantine | 10 min |
+| `Flaky test` | Race condition | 10 min |
 | `AssertionError` | Regression | 30 min |
 
-## 🚨 Step 1: Identify Failure Type
-
-```bash
-# Look at the test output
-cat reports/allure-results/*.json | jq '.status'
-```
+## Step 1: Identify Failure Type
 
 ### Common Patterns
 
 | Pattern | Meaning | Action |
 |---------|---------|--------|
-| `ConnectionError` to Kafka | Kafka not ready | Check `docker-compose ps` |
-| `ConnectionError` to DB | PostgreSQL issue | Check DB health |
-| `401 Unauthorized` | Token issues | Refresh `AMOCRM_LONG_TOKEN` |
-| `404 Not Found` | Endpoint changed | Check API contract |
+| `ConnectionError` to PostgreSQL | DB not ready | Check docker-compose ps |
+| `401 Unauthorized` | Token issues | Refresh AMOCRM_LONG_TOKEN |
+| `404 Not Found` | API endpoint changed | Check contract |
 | `Timeout` | Service slow | Check service health |
-| `StaleElementReference` | Page changed | Update locator |
+| `StaleElementReference` | UI changed | Update locator |
 
-## 🔧 Step 2: Reproduce Locally
-
-### Quick Local Run
+## Step 2: Reproduce Locally
 
 ```bash
 # Run only the failing test
-pytest pipelines/api/tests/test_auth.py::TestAuth::test_account_info -v
+pytest tests/test_contacts.py::test_create_contact -v
 
 # Run with full debug output
-pytest pipelines/ -k "test_name" -vv --capture=no -o log_cli=true
+pytest tests/ -k "test_name" -vv --capture=no
 
-# Run specific pipeline
-pytest pipelines/api/ -v -n auto
+# Run smoke tests
+pytest tests/ -m smoke -v
 ```
 
-### Full Environment
+## Step 3: Analyze Failure
+
+### Check Test Output
 
 ```bash
-# Start infrastructure
-docker-compose -f docker-compose.yml up -d
+# Run all tests with verbose
+pytest tests/ -v --tb=short
 
-# Wait for services
-sleep 30
+# Run with xdist parallel
+pytest tests/ -n auto
+```
 
-# Verify services
+### Check Service Health
+
+```bash
 docker-compose ps
-
-# Run tests
-pytest pipelines/ -v --alluredir=reports
-
-# View report
-allure serve reports
+docker-compose logs app --tail=50
 ```
 
-## 📊 Step 3: Analyze Failure
-
-### Check Test History
-
-```bash
-# Find flaky tests (3+ failures in last 5 runs)
-grep -r "FAILED" reports/allure-results/ | cut -d'/' -f4 | sort | uniq -c | sort -rn | head -10
-```
-
-### Check Logs
-
-```bash
-# Docker logs
-docker-compose logs postgres --tail=100
-docker-compose logs kafka --tail=100
-docker-compose logs app --tail=100
-
-# Application logs
-cat reports/allure-results/*-result.json | jq '.steps[].name'
-```
-
-### Check Metrics
-
-```python
-# In prometheus format (exposed at /metrics)
-test_duration_seconds{test="test_name"}
-test_status{test="test_name",status="passed|failed"}
-```
-
-## 🛠️ Step 4: Fix
+## Step 4: Fix
 
 ### If Flaky Test
 
@@ -99,90 +62,37 @@ test_status{test="test_name",status="passed|failed"}
 # Add explicit wait or retry
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
 def test_sometimes_fails():
-    # Test code
     pass
 ```
 
 ### If Regression
 
-```python
-# Create issue with label
-# Fix the bug in source code
-# Add test that catches the bug
-# Update baseline if needed
-```
+1. Create issue
+2. Fix the bug
+3. Add test that catches the bug
 
 ### If Environment Issue
 
 ```bash
-# Restart services
 docker-compose restart
-
-# Or rebuild
+# or
 docker-compose down -v
-docker-compose up -d --build
+docker-compose up -d
 ```
 
-## 📢 Step 5: Notify
-
-### Discord Notification (automatic on main branch failure)
-
-```json
-{
-  "content": "⚠️ CI Pipeline Failed",
-  "embeds": [{
-    "title": "Test Failure",
-    "description": "33 tests failed in api pipeline",
-    "url": "https://github.com/ssrjkk/amoCRM/actions"
-  }]
-}
-```
-
-### Manual Escalation
-
-1. **Post in #qa-automation** with:
-   - Test name
-   - Error message
-   - Link to CI run
-
-2. **Create Issue** if bug:
-   - Label: `bug`, `priority:high`
-   - Assign to relevant team
-
-## ✅ Step 6: Verify Fix
+## Step 5: Verify Fix
 
 ```bash
 # Run the test again
-pytest pipelines/ -k "test_name" -v
+pytest tests/ -k "test_name" -v
 
-# If fixed, commit with message
-git commit -m "fix(test): resolve flaky test_test_name
-
-- Added explicit wait for element
-- Increased timeout to 30s
-- Test now passes consistently"
+# Commit fix
+git commit -m "fix: resolve flaky test_test_name"
 ```
 
-## 📋 Emergency Contacts
+## Emergency Contacts
 
 | Role | Contact |
 |------|---------|
-| QA Lead | @ssrjk |
-| Dev Lead | Check #team channel |
+| QA Lead | @ssrjkk |
 | On-call | Check PagerDuty |
-
-## 🔄 Rollback Procedure
-
-If CI breaks production:
-
-```bash
-# Revert last commit
-git revert HEAD
-
-# Push revert
-git push origin main
-
-# This will trigger another CI run
-# If still failing, check the previous working commit
-git log --oneline -10
-```
