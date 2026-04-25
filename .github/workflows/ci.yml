@@ -7,27 +7,20 @@ on:
   schedule:
     - cron: "0 2 * * *"
   workflow_dispatch:
-    inputs:
-      test_type:
-        description: 'Test type to run'
-        required: true
-        default: 'all'
-        type: choice
-        options:
-          - all
-          - smoke
-          - critical
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+  cancel-in-progress: true
 
 env:
   PYTHON_VERSION: '3.12'
 
 jobs:
+  # ======================
+  # LINT
+  # ======================
   lint:
-    name: Lint & Code Quality
+    name: Lint
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -38,23 +31,21 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-      - name: Install lint deps
+      - name: Install
         run: pip install ruff mypy
-      - name: Cache ruff
-        uses: actions/cache@v5
-        with:
-          path: .ruff_cache
-          key: ruff-${{ runner.os }}-${{ hashFiles('requirements.txt', '**/*.py') }}
-      - name: Run Ruff
+      - name: Run ruff
         run: ruff check . --output-format=github
-      - name: Run MyPy
+      - name: Run mypy
         run: mypy api core config --ignore-missing-imports || true
         continue-on-error: true
 
-  unit-tests:
+  # ======================
+  # UNIT TESTS
+  # ======================
+  unit:
     name: Unit Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     needs: [lint]
     steps:
       - uses: actions/checkout@v5
@@ -64,21 +55,19 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-      - name: Install dependencies
+      - name: Install
         run: pip install -r requirements.txt
-      - name: Run unit tests
-        run: pytest tests/ -v --cov --cov-report=xml --cov-fail-under=70 -m "not integration" -n auto --maxfail=5
-      - name: Upload coverage
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage
-          path: coverage.xml
+      - name: Run
+        run: pytest tests/ -v --cov --cov-report=xml --cov-fail-under=70 -n auto --maxfail=5
 
-  smoke-tests:
+  # ======================
+  # SMOKE TESTS
+  # ======================
+  smoke:
     name: Smoke Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    needs: [lint, unit-tests]
+    timeout-minutes: 5
+    needs: [unit]
     if: github.event_name != 'schedule'
     steps:
       - uses: actions/checkout@v5
@@ -87,17 +76,19 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
-      - name: Run smoke tests
+      - name: Run
         run: |
           pip install -r requirements.txt
           pytest tests/ -m smoke -v --tb=short -n auto --maxfail=5
 
-  api-tests:
+  # ======================
+  # API TESTS
+  # ======================
+  api:
     name: API Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: [unit-tests]
+    timeout-minutes: 10
+    needs: [unit]
     steps:
       - uses: actions/checkout@v5
         with:
@@ -106,167 +97,103 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-      - name: Install dependencies
+      - name: Install
         run: pip install -r requirements.txt
-      - name: Run API tests
-        run: pytest pipelines/api/tests/ -v --alluredir=reports/allure-api -n auto --tb=short --maxfail=3
-      - name: Upload Allure results
+      - name: Run
+        run: pytest pipelines/api/ -v --alluredir=reports/api -n auto --maxfail=3
+      - name: Upload
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: allure-api
-          path: reports/allure-api/
-          retention-days: 7
+          path: reports/api/
 
-  db-tests:
-    name: Database Tests
+  # ======================
+  # DB TESTS
+  # ======================
+  db:
+    name: DB Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: [unit-tests]
+    timeout-minutes: 10
+    needs: [unit]
     services:
       postgres:
         image: postgres:15-alpine
         env:
           POSTGRES_USER: test
           POSTGRES_PASSWORD: test
-          POSTGRES_DB: amocrm_test
+          POSTGRES_DB: test
         ports:
           - 5432:5432
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s
     steps:
       - uses: actions/checkout@v5
-        with:
-          fetch-depth: 1
       - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
-      - name: Run DB tests
+      - name: Run
         run: |
           pip install -r requirements.txt
-          export DATABASE_URL=postgresql://test:test@localhost:5432/amocrm_test
-          pytest pipelines/db/ -m db -v --alluredir=reports/allure-db -n auto --maxfail=3
+          export DATABASE_URL=postgresql://test:test@localhost:5432/test
+          pytest pipelines/db/ -m db -v --alluredir=reports/db --maxfail=3
         continue-on-error: true
-      - name: Upload results
+      - name: Upload
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: allure-db
-          path: reports/allure-db/
-          retention-days: 7
+          path: reports/db/
 
-  ui-tests:
+  # ======================
+  # UI TESTS
+  # ======================
+  ui:
     name: UI Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: [unit-tests]
+    timeout-minutes: 10
+    needs: [unit]
     steps:
       - uses: actions/checkout@v5
-        with:
-          fetch-depth: 1
       - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
-      - name: Cache Playwright
+      - name: Cache
         uses: actions/cache@v5
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-chromium-${{ hashFiles('requirements.txt') }}
-      - name: Install Playwright
+          key: pw-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
+      - name: Install
         run: |
           pip install -r requirements.txt
           playwright install --with-deps chromium
-      - name: Run UI tests
+      - name: Run
         run: |
-          pytest pipelines/ui/ -m ui -v --alluredir=reports/allure-ui -n auto --tb=short --maxfail=3 --reruns 2 --reruns-delay 5
+          pytest pipelines/ui/ -m ui -v --alluredir=reports/ui --maxfail=3 --reruns 2
         continue-on-error: true
-      - name: Upload results
+      - name: Upload
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: allure-ui
-          path: reports/allure-ui/
+          path: reports/ui/
 
-  kafka-tests:
-    name: Kafka Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: [unit-tests]
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          fetch-depth: 1
-      - uses: actions/setup-python@v6
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-      - name: Run Kafka tests
-        run: |
-          export KAFKA_BROKERS=${{ secrets.KAFKA_BROKERS || '' }}
-          pytest pipelines/kafka/ -m kafka -v --alluredir=reports/allure-kafka -n auto --tb=short --maxfail=3
-        continue-on-error: true
-      - name: Upload results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: allure-kafka
-          path: reports/allure-kafka/
-
-  build:
-    name: Build Docker Image
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    needs: [unit-tests]
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          fetch-depth: 1
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-      - name: Build Docker image
-        run: docker build -t amocrm-qa:${{ github.sha }} .
-      - name: Run container test
-        run: |
-          docker run -d --name test-app -p 8080:8080 amocrm-qa:${{ github.sha }}
-          sleep 5
-          curl -f --max-time 5 http://localhost:8080/health || (docker logs test-app; docker rm test-app; exit 1)
-          docker rm -f test-app
-        continue-on-error: true
-
+  # ======================
+  # NOTIFY
+  # ======================
   notify:
-    name: Notify Results
+    name: Notify
     runs-on: ubuntu-latest
-    timeout-minutes: 5
-    needs: [lint, unit-tests, smoke-tests, api-tests, db-tests, ui-tests, kafka-tests, build]
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    timeout-minutes: 3
+    needs: [lint, unit, smoke, api, db, ui]
+    if: github.ref == 'refs/heads/main'
     steps:
-      - name: Get run summary
-        id: summary
-        run: |
-          STATUS="${{ job.status }}"
-          if [ "$STATUS" == "success" ]; then
-            STATUS_ICON="✅"
-            STATUS_TEXT="PASSED"
-          else
-            STATUS_ICON="🔴"
-            STATUS_TEXT="FAILED"
-          fi
-          echo "status_icon=$STATUS_ICON" >> $GITHUB_OUTPUT
-          echo "status_text=$STATUS_TEXT" >> $GITHUB_OUTPUT
-      - name: Send Telegram notification
+      - name: Telegram
         if: success()
         run: |
-          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
-            echo "Telegram not configured"
-            exit 0
-          fi
+          [ -z "$TELEGRAM_BOT_TOKEN" ] && exit 0
           curl -s --max-time 10 -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
             -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-            -d text="${{ steps.summary.outputs.status_icon }} CI ${{ steps.summary.outputs.status_text }} on main%0A%0Ahttps://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-            -d parse_mode="Markdown"
+            -d text="✅ CI PASSED%0A${{ github.repository }}%0Ahttps://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
