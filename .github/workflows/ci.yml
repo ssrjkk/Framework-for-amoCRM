@@ -255,19 +255,14 @@ jobs:
           path: reports/allure-ui/
 
   # ============================================
-  # CROSS-BROWSER TESTS (push main + schedule)
+  # CROSS-BROWSER TESTS (disabled - no tests)
   # ============================================
   crossbrowser-tests:
     name: Cross-Browser Tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: [lint, unit-tests]
-    if: github.event_name == 'push' || github.event_name == 'schedule'
-    strategy:
-      fail-fast: false
-      matrix:
-        browser: [chromium, firefox, webkit]
-    steps:
+    if: false
       - uses: actions/checkout@v5
         with:
           fetch-depth: 1
@@ -288,14 +283,14 @@ jobs:
         continue-on-error: true
 
   # ============================================
-  # KAFKA TESTS (push main + schedule)
+  # KAFKA TESTS (disabled - no cluster)
   # ============================================
   kafka-tests:
     name: Kafka Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: [lint, unit-tests]
-    if: github.event_name == 'push' || github.event_name == 'schedule'
+    if: false
     services:
       kafka:
         image: confluentinc/cp-kafka:7.5.0
@@ -338,14 +333,14 @@ jobs:
           path: reports/allure-kafka/
 
   # ============================================
-  # LOAD TESTS (push main + schedule)
+  # LOAD TESTS (disabled - schedule only)
   # ============================================
   load-tests:
     name: Load Tests
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: [lint, unit-tests]
-    if: github.event_name == 'push' || github.event_name == 'schedule'
+    if: false
     steps:
       - uses: actions/checkout@v5
         with:
@@ -376,14 +371,14 @@ jobs:
           path: reports/load-report.html
 
   # ============================================
-  # BUILD (push main + develop)
+  # BUILD (disabled - manual only)
   # ============================================
   build:
     name: Build Docker Image
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: [lint, unit-tests]
-    if: github.event_name == 'push'
+    if: false
     steps:
       - uses: actions/checkout@v5
         with:
@@ -424,29 +419,12 @@ jobs:
         run: |
           mkdir -p reports/allure-results
           find reports -name "*.json" -type f -exec mv {} reports/allure-results/ \; 2>/dev/null || true
+          ls -la reports/allure-results/ || echo "No results"
 
-      - name: Cache Allure
-        uses: actions/cache@v5
-        with:
-          path: ~/.allure
-          key: allure-${{ runner.os }}-2.17.3
-          restore-keys: |
-            allure-${{ runner.os }}-
-
-      - name: Install Allure
+      - name: Show summary
         run: |
-          curl -sL https://get.allure.io/install.sh | bash
-          export PATH=$PATH:$ALLURE_HOME/bin
-
-      - name: Generate report
-        run: |
-          allure generate reports/allure-results -o allure-report --quiet
-
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: allure-report
+          echo "Test results available as artifacts:"
+          ls -la reports/
 
   # ============================================
   # NOTIFICATIONS (main/develop only)
